@@ -1,0 +1,49 @@
+@import "tailwindcss";
+@plugin './hero.js';
+/* Note: You may need to change the path to fit your project structure */
+@source '../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  /* 🔵 Primary (أزرق هادي مريح) */
+  --color-primary: #3b82f6;
+  --color-primary-hover: #2563eb;
+
+  /* 🧱 Backgrounds */
+  --color-bg: #f8fafc;
+  --color-card: #ffffff;
+
+  /* 🌙 Dark backgrounds */
+  --color-bg-dark: #0f172a;
+  --color-card-dark: #1e293b;
+
+  /* 📝 Text */
+  --color-text: #0f172a;
+  --color-text-muted: #64748b;
+
+  /* 🌙 Dark Text */
+  --color-text-dark: #f1f5f9;
+  --color-text-muted-dark: #94a3b8;
+
+  /* 🧱 Borders */
+  --color-border: #e2e8f0;
+  --color-border-dark: #334155;
+
+  /* 🎯 States */
+  --color-success: #22c55e;
+  --color-danger: #ef4444;
+  --color-warning: #f59e0b;
+
+  /* ✨ Hover surfaces */
+  --color-hover: #f1f5f9;
+  --color-hover-dark: #303e55;
+}
+
+body {
+  @apply bg-bg text-text h-screen;
+}
+
+.dark body {
+  @apply bg-bg-dark text-text-dark;
+}
+
