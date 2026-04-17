@@ -11,7 +11,7 @@ import {
 import { FiRepeat } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import { FaRegBookmark } from "react-icons/fa6";
-import { useContext, useState } from "react";
+import { useContext, useState, useRef } from "react";
 import { authContext } from "../../context/AuthContextProvider";
 import axios from "axios";
 import AllLikesModal from "./AllLikesModal";
@@ -34,9 +34,6 @@ export default function PostCard({ post }) {
     body,
     image,
     createdAt,
-    likes,
-    comments,
-    shares,
     privacy,
     _id,
     likesCount,
@@ -47,17 +44,38 @@ export default function PostCard({ post }) {
   } = post;
 
   const [showComments, setShowComments] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [shareText, setShareText] = useState("");
+  const [selectedPost, setSelectedPost] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedContent, setEditedContent] = useState(post?.body || "");
   const [notBody, setBody] = useState(post?.body || "");
-
   const [isSaved, setIsSaved] = useState(post.isSaved || false);
   const queryClient = useQueryClient();
+
+  const isLiked = post.likes.includes(currentUserId);
+  const handleLike = useMutation({
+    mutationFn: async (postId) => {
+      return axios.put(
+        `https://route-posts.routemisr.com/posts/${postId}/like`,
+        {},
+        { headers: { token } },
+      );
+    },
+    onSuccess: () => {
+      toast.success("Post liked ✅");
+      queryClient.invalidateQueries(["posts"]);
+    },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Error");
+    },
+  });
 
   const savePostMutation = useMutation({
     mutationFn: async (postId) => {
       return axios.put(
         `https://route-posts.routemisr.com/posts/${postId}/bookmark`,
+        {},
         { headers: { token } },
       );
     },
@@ -66,6 +84,27 @@ export default function PostCard({ post }) {
 
       queryClient.invalidateQueries(["posts"]);
     },
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Error");
+    },
+  });
+
+  const handleShare = useMutation({
+    mutationFn: async ({ postId, body }) => {
+      return axios.post(
+        `https://route-posts.routemisr.com/posts/${postId}/share`,
+        { body },
+        { headers: { token } },
+      );
+    },
+
+    onSuccess: () => {
+      toast.success("Post shared successfully ✅");
+      queryClient.invalidateQueries(["posts"]);
+      setIsShareOpen(false);
+      setShareText("");
+    },
+
     onError: (error) => {
       toast.error(error.response?.data?.message || "Error");
     },
@@ -160,12 +199,13 @@ export default function PostCard({ post }) {
           <div className="flex items-center gap-1 ml-auto">
             <Button
               onClick={() => savePostMutation.mutate(_id)}
-              className="bg-transparent text-text-muted dark:text-text-muted-dark hover:bg-hover dark:hover:bg-hover-dark rounded-full p-2"
+              disabled={savePostMutation.isPending}
+              className="bg-transparent hover:bg-hover dark:hover:bg-hover-dark rounded-full p-2 transition"
             >
               {savePostMutation.isPending ? (
-                "Saving..."
-              ) : isSaved ? (
-                <FaBookmark className="w-4 h-4" />
+                <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : post.bookmarked ? (
+                <FaBookmark className="w-4 h-4 text-blue-600" />
               ) : (
                 <FaRegBookmark className="w-4 h-4" />
               )}
@@ -339,8 +379,32 @@ export default function PostCard({ post }) {
 
       {/* ACTIONS */}
       <div className="grid grid-cols-3 gap-1 p-1 text-sm">
-        <Button className="flex items-center justify-center gap-2 py-3 bg-transparent text-text-muted dark:text-text-muted-dark hover:bg-hover dark:hover:bg-hover-dark transition">
-          <FaThumbsUp /> Like
+        <Button
+          onClick={() => handleLike.mutate(post.id)}
+          disabled={handleLike.isPending}
+          className={`flex items-center justify-center gap-2 py-3 transition
+  disabled:opacity-50
+  ${
+    isLiked
+      ? "bg-blue-600/40 text-white hover:bg-blue-700/65"
+      : "bg-transparent text-text-muted dark:text-text-muted-dark hover:bg-hover dark:hover:bg-hover-dark"
+  }
+  `}
+        >
+          {handleLike.isPending ? (
+            <>
+              <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+              Loading...
+            </>
+          ) : isLiked ? (
+            <>
+              <FaThumbsUp /> Liked{" "}
+            </>
+          ) : (
+            <>
+              <FaThumbsUp /> Like
+            </>
+          )}
         </Button>
         <Button
           onClick={() => setShowComments((prev) => !prev)}
@@ -348,7 +412,15 @@ export default function PostCard({ post }) {
         >
           <FaRegCommentDots /> Comment
         </Button>
-        <Button className="flex items-center justify-center gap-2 py-3 bg-transparent text-text-muted dark:text-text-muted-dark hover:bg-hover dark:hover:bg-hover-dark transition">
+        <Button
+          onClick={() => {
+            setSelectedPost(post);
+            setIsShareOpen(true);
+          }}
+          className="flex items-center justify-center gap-2 py-3 
+  bg-transparent text-text-muted dark:text-text-muted-dark 
+  hover:bg-hover dark:hover:bg-hover-dark transition"
+        >
           <FaShareAlt /> Share
         </Button>
       </div>
@@ -398,6 +470,127 @@ export default function PostCard({ post }) {
           No comments yet.
         </p>
       )}
+
+      {/*Share Open */}
+
+      {isShareOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div
+            className="w-full max-w-[560px] rounded-2xl 
+      border border-border dark:border-border-dark
+      bg-card dark:bg-card-dark shadow-2xl
+      animate-fadeIn"
+          >
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border dark:border-border-dark px-4 py-3">
+              <h4 className="text-base font-extrabold text-text dark:text-text-dark">
+                Share post
+              </h4>
+
+              <button
+                onClick={() => setIsShareOpen(false)}
+                className="h-8 w-8 rounded-full flex items-center justify-center
+          text-text-muted dark:text-text-muted-dark
+          hover:bg-hover dark:hover:bg-hover-dark transition"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="space-y-3 p-4">
+              <textarea
+                value={shareText}
+                onChange={(e) => setShareText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+
+                    handleShare.mutate({
+                      postId: selectedPost.id,
+                      body: shareText,
+                    });
+                  }
+                }}
+                disabled={handleShare.isPending}
+                placeholder="Say something about this..."
+                rows={3}
+                className="w-full resize-none rounded-xl border border-border dark:border-border-dark
+  bg-bg dark:bg-bg-dark
+  px-3 py-2 text-sm text-text dark:text-text-dark
+  outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
+              />
+
+              {/* Post preview */}
+              <div className="rounded-xl border border-border dark:border-border-dark bg-hover dark:bg-hover-dark p-3">
+                {/* user info */}
+                <div className="flex items-center gap-2">
+                  <img
+                    src={selectedPost?.user?.photo}
+                    className="h-8 w-8 rounded-full object-cover"
+                  />
+
+                  <div>
+                    <p className="text-sm font-bold text-text dark:text-text-dark">
+                      {selectedPost?.user?.name}
+                    </p>
+
+                    <p className="text-xs text-text-muted dark:text-text-muted-dark">
+                      @{selectedPost?.user?.username}
+                    </p>
+                  </div>
+                </div>
+
+                {/* body */}
+                <p className="mt-2 text-sm text-text dark:text-text-dark">
+                  {selectedPost?.body}
+                </p>
+
+                {/* image */}
+                {selectedPost?.image && (
+                  <img
+                    src={selectedPost.image}
+                    className="mt-2 max-h-[220px] w-full rounded-lg object-cover"
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-2 border-t border-border dark:border-border-dark px-4 py-3">
+              <Button
+                onClick={() => setIsShareOpen(false)}
+                className="rounded-lg border border-border dark:border-border-dark 
+          px-4 py-2 text-sm font-bold text-text dark:text-text-dark 
+          hover:bg-hover dark:hover:bg-hover-dark transition"
+              >
+                Cancel
+              </Button>
+
+              <Button
+                onClick={() =>
+                  handleShare.mutate({
+                    postId: selectedPost.id,
+                    body: shareText,
+                  })
+                }
+                disabled={handleShare.isPending || !shareText.trim()}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary-hover transition disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {handleShare.isPending ? (
+                  <>
+                    Sharing...{" "}
+                    <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                  </>
+                ) : (
+                  "Share now"
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <AllLikesModal
         isOpen={open}
         onClose={() => setOpen(false)}
