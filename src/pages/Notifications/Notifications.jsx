@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import CardLoding from "../../components/LodingSk/CardLoding";
 import { CiHeart } from "react-icons/ci";
 import { Link } from "react-router-dom";
+import LoadingPage from "../../components/Loading/LoadingPage";
 
 export default function Notifications() {
   let { token } = useContext(authContext);
@@ -74,7 +75,7 @@ export default function Notifications() {
     select: (res) => res.data.data.notifications,
   });
 
-  if (isLoading) return <CardLoding />;
+  if (isLoading) return <LoadingPage />;
 
   if (isError)
     return (

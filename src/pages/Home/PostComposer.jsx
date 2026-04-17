@@ -11,6 +11,8 @@ export default function PostComposer() {
   const [text, setText] = useState("");
   const textareaRef = useRef(null);
   const [image, setImage] = useState(null);
+  const [preview, setPreview] = useState(null);
+  const fileInputRef = useRef(null);
 
   async function handleCreatePost() {
     try {
@@ -73,13 +75,46 @@ export default function PostComposer() {
           className="w-full h-28 rounded-2xl border border-border dark:border-border-dark bg-card-hover px-4 py-3 text-[17px] leading-relaxed text-text dark:text-text-dark outline-none transition focus:border-color-primary focus:bg-card dark:focus:bg-card-dark resize-none"
         />
       </div>
+      {preview && (
+        <div className="relative mt-3 w-fit">
+          <img
+            src={preview}
+            alt="preview"
+            className="max-h-60 rounded-xl border"
+          />
+          <button
+            onClick={() => {
+              setImage(null);
+              setPreview(null);
+              if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+              }
+            }}
+            className="absolute top-2 right-2 bg-bg-dark/70 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm hover:bg-bg-dark cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-border dark:border-border-dark pt-3">
         <div className="relative flex items-center gap-2">
           <label className="flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold text-text-muted transition hover:bg-card-hover">
             <CiImageOn className="w-5 h-5 text-emerald-500" />
             <span className="hidden sm:inline">Photo/video</span>
-            <input accept="image/*" type="file" className="hidden" />
+            <input
+              accept="image/*"
+              type="file"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  setImage(file);
+                  setPreview(URL.createObjectURL(file));
+                }
+                e.target.value = "";
+              }}
+            />
           </label>
 
           <button

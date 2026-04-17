@@ -6,6 +6,7 @@ import { authContext } from "./../../context/AuthContextProvider";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { FaCalendarDay } from "react-icons/fa";
+import LoadingPage from "../../components/Loading/LoadingPage";
 
 
 export default function Profile() {
@@ -52,11 +53,9 @@ export default function Profile() {
     select: (res) => res.data.data.user,
   });
   
-  if (isLoading) return <>
-  <p>
-    loding...
-  </p>
-  </>
+  if (isLoading) return (
+    <LoadingPage/>
+  )
 
   if (isError)
     return (
@@ -234,6 +233,7 @@ export default function Profile() {
           </div>
         </section>
       </div>
+      
     </>
   );
 }

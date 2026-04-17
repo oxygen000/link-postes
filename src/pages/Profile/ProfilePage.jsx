@@ -5,6 +5,7 @@ import { authContext } from "../../context/AuthContextProvider";
 import  axios  from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import { Link, useParams } from "react-router-dom";
+import LoadingPage from "../../components/Loading/LoadingPage";
 
 
 export default function ProfilePage() {
@@ -33,11 +34,9 @@ export default function ProfilePage() {
     queryKey: [`MyProfileUser${id}`],
     select: (res) => res.data.data.user,
   });
-  if (isLoading) return <>
-  <p>
-    loding...
-  </p>
-  </>
+  if (isLoading) return (
+    <LoadingPage/>
+  )
 
   if (isError)
     return (
