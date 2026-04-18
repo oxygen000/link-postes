@@ -1,42 +1,79 @@
 import { FaArrowLeft, FaUserPlus } from "react-icons/fa";
 import PostCard from "../Home/PostCard";
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import { authContext } from "../../context/AuthContextProvider";
-import  axios  from 'axios';
-import { useQuery } from '@tanstack/react-query';
+import axios from "axios";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useParams } from "react-router-dom";
 import LoadingPage from "../../components/Loading/LoadingPage";
-
+import { FaUserMinus } from "react-icons/fa6";
 
 export default function ProfilePage() {
+  let { token } = useContext(authContext);
+  let { id } = useParams();
+  const [followingIds, setFollowingIds] = useState([]);
+  const [loadingId, setLoadingId] = useState(null);
 
-   let { token } = useContext(authContext);
-   let { id  } = useParams();
+  const { mutate: toggleFollow } = useMutation({
+    mutationFn: (userId) =>
+      axios.put(
+        `https://route-posts.routemisr.com/users/${userId}/follow`,
+        {},
+        { headers: { token } },
+      ),
 
+    onMutate: (userId) => {
+      setLoadingId(userId);
 
+      setFollowingIds((prev) =>
+        prev.includes(userId)
+          ? prev.filter((id) => id !== userId)
+          : [...prev, userId],
+      );
+    },
+
+    onSettled: () => {
+      setLoadingId(null);
+    },
+  });
 
   async function getProfile() {
-    return axios.get(
-      `https://route-posts.routemisr.com/users/${id}/profile`,
-      {
-        headers: {
-          token: token,
-        },
+    return axios.get(`https://route-posts.routemisr.com/users/${id}/profile`, {
+      headers: {
+        token: token,
       },
-    );
+    });
   }
   let {
     data: userdata = [],
-    isLoading,
-    isError,
+    isLoading: isProfileLoading,
+    isError: isProfileError,
   } = useQuery({
     queryFn: getProfile,
     queryKey: [`MyProfileUser${id}`],
     select: (res) => res.data.data.user,
   });
-  if (isLoading) return (
-    <LoadingPage/>
-  )
+
+  async function getPostProfile() {
+    return axios.get(`https://route-posts.routemisr.com/users/${id}/posts`, {
+      headers: {
+        token: token,
+      },
+    });
+  }
+  let {
+    data: userdatapost = [],
+    isLoading: isPostsLoading,
+    isError: isPostsError,
+  } = useQuery({
+    queryFn: getPostProfile,
+    queryKey: [`MyProfilePost${id}`],
+    select: (res) => res.data.data.posts,
+  });
+  const isLoading = isProfileLoading || isPostsLoading;
+  const isError = isProfileError || isPostsError;
+
+  if (isLoading) return <LoadingPage />;
 
   if (isError)
     return (
@@ -44,28 +81,31 @@ export default function ProfilePage() {
     );
 
   return (
-    <div className="mx-auto max-w-7xl px-3 py-3.5 bg-slate-50">
+    <div className="mx-auto max-w-7xl px-3 py-3.5 bg-bg dark:bg-bg-dark">
       <main className="min-w-0">
         <div className="space-y-4">
           {/* Back Button */}
-          <Link to={"/"} className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm font-bold text-slate-900 transition hover:bg-slate-100">
-            <FaArrowLeft />
+          <Link
+            to={"/"}
+            className="mb-3 w-[80px] flex items-center gap-2 rounded-lg border border-border dark:border-border-dark  bg-bg dark:bg-bg-dark px-3 py-2 text-sm font-bold text-text-muted hover:bg-hover"
+          >
+            <FaArrowLeft size={14} />
             Back
           </Link>
 
           {/* Profile Header */}
-          <section className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm bg-white">
+          <section className="overflow-hidden rounded-2xl border shadow-sm  bg-bg dark:bg-bg-dark border-border dark:border-border-dark">
             <div className="h-48 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-600">
               {userdata.cover && (
                 <img
-                alt={userdata.name}
-                src={userdata.cover}
-                className="h-full w-full object-cover"
-              />
+                  alt={userdata.name}
+                  src={userdata.cover}
+                  className="h-full w-full object-cover"
+                />
               )}
             </div>
             <div className="relative -mt-14 px-3 pb-5 sm:px-5">
-              <div className="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-white/70 bg-white/95 p-4">
+              <div className="flex flex-wrap items-end justify-between gap-4 rounded-2xl border bg-bg dark:bg-bg-dark border-border dark:border-border-dark text-text dark:text-text-dark p-4">
                 <div className="flex items-end gap-3">
                   <img
                     alt={userdata.name}
@@ -73,29 +113,46 @@ export default function ProfilePage() {
                     src={userdata.photo}
                   />
                   <div>
-                    <p className="text-xl font-black text-slate-900 sm:text-2xl">
+                    <p className="text-xl font-black  sm:text-2xl">
                       {userdata.name}
                     </p>
-                    <p className="text-sm font-semibold text-slate-500 sm:text-base">
+                    <p className="text-sm font-semibold text-text-muted dark:text-text-muted-dark sm:text-base">
                       @{userdata.username}
                     </p>
                   </div>
                 </div>
                 <button
-                  type="button"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-extrabold bg-blue-500 text-white hover:bg-blue-600 transition"
+                  className={`inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-extrabold  transition ease-in-out"
+
+              ${
+                followingIds.includes(userdata._id)
+                  ? "bg-gray-200 text-text hover:bg-blue-700/90"
+                  : "bg-primary/10 text-text-dark hover:bg-blue-600"
+              }`}
+                  onClick={() => toggleFollow(userdata._id)}
+                  disabled={loadingId === userdata._id}
                 >
-                  <FaUserPlus />
-                  Follow
+                  {loadingId === userdata._id ? (
+                    "Loading..."
+                  ) : followingIds.includes(userdata._id) ? (
+                    <>
+                      <FaUserMinus size={13} />
+                      Unfollow
+                    </>
+                  ) : (
+                    <>
+                      <FaUserPlus size={13} /> Follow
+                    </>
+                  )}
                 </button>
               </div>
             </div>
           </section>
 
           {/* Posts Section */}
-          {/* <section className="space-y-3">
-            {posts && posts.length > 0 ? (
-              posts.map(
+          <section className="space-y-3">
+            {userdatapost && userdatapost.length > 0 ? (
+              userdatapost.map(
                 (post) => post && <PostCard key={post.id} post={post} />,
               )
             ) : (
@@ -103,10 +160,9 @@ export default function ProfilePage() {
                 No posts yet. Be the first one to publish.
               </div>
             )}
-          </section> */}
+          </section>
         </div>
       </main>
     </div>
   );
-};
-
+}

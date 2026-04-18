@@ -11,7 +11,7 @@ import axios from "axios";
 import { useContext } from "react";
 import { authContext } from "../../context/AuthContextProvider";
 import { useQuery } from "@tanstack/react-query";
-import { useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import LoadingPage from "../../components/Loading/LoadingPage";
 
 export default function PostDaels() {
@@ -51,10 +51,10 @@ export default function PostDaels() {
   return (
     <div className="mx-auto max-w-7xl bg-bg dark:bg-bg-dark px-3 py-4">
       <main className="mx-auto max-w-3xl">
-        <button className="mb-3 flex items-center gap-2 rounded-lg border border-border dark:border-border-dark  bg-bg dark:bg-bg-dark px-3 py-2 text-sm font-bold text-text-muted hover:bg-hover">
+        <Link to={"/"} className="mb-3 w-[80px] flex items-center gap-2 rounded-lg border border-border dark:border-border-dark  bg-bg dark:bg-bg-dark px-3 py-2 text-sm font-bold text-text-muted hover:bg-hover">
           <FaArrowLeft size={14} />
           Back
-        </button>
+        </Link>
 
         <article className="overflow-visible rounded-xl border border-border dark:border-border-dark bg-bg dark:bg-bg-dark shadow-sm">
           <PostCard key={post._id} post={post} />
