@@ -13,9 +13,12 @@ export default function PostComposer() {
   const [image, setImage] = useState(null);
   const [preview, setPreview] = useState(null);
   const fileInputRef = useRef(null);
+  const [isPosting, setIsPosting] = useState(false);
 
   async function handleCreatePost() {
     try {
+      setIsPosting(true);
+
       const formData = new FormData();
 
       if (text) formData.append("body", text);
@@ -35,9 +38,14 @@ export default function PostComposer() {
 
       setText("");
       setImage(null);
-      toast.success("Post Success ");
+      setPreview(null);
+
+      toast.success("Post Success");
     } catch (error) {
       console.log(error);
+      toast.error("Error creating post");
+    } finally {
+      setIsPosting(false);
     }
   }
 
@@ -131,11 +139,20 @@ export default function PostComposer() {
         <div className="flex items-center gap-3">
           <button
             className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-extrabold text-white shadow-sm transition-colors hover:bg-color-primary-hover disabled:opacity-60 cursor-pointer disabled:cursor-not-allowed"
-            disabled={!text.trim() && !image}
+            disabled={(!text.trim() && !image) || isPosting}
             onClick={handleCreatePost}
           >
-            Post
-            <IoPaperPlaneOutline className="w-4 h-4" />
+            {isPosting ? (
+              <>
+                Posting...
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+              </>
+            ) : (
+              <>
+                Post
+                <IoPaperPlaneOutline className="w-4 h-4" />
+              </>
+            )}
           </button>
         </div>
       </div>
