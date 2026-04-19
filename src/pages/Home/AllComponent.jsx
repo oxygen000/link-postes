@@ -13,6 +13,7 @@ import { toast } from "react-toastify";
 import { FiMessageCircle } from "react-icons/fi";
 import { jwt_decode } from "jwt-decode-es";
 import { MdDeleteOutline } from "react-icons/md";
+import ReplySection from "./ReplySection";
 
 export default function AllComponent({ ComponentData }) {
   const commentRef = useRef(null);
@@ -22,6 +23,8 @@ export default function AllComponent({ ComponentData }) {
   const decodedToken = token ? jwt_decode(token) : null;
   const currentUserId = decodedToken?.user;
   const [isEditing, setIsEditing] = useState(false);
+  const [openReplyId, setOpenReplyId] = useState(null);
+  const replyRef = useRef(null);
 
   const likeMutation = useMutation({
     mutationFn: async (commentId) => {
@@ -105,6 +108,8 @@ export default function AllComponent({ ComponentData }) {
     },
   });
 
+
+
   let {
     data: comments = [],
     isLoading,
@@ -115,18 +120,28 @@ export default function AllComponent({ ComponentData }) {
     select: (res) => res.data.data.comments,
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center gap-2 text-text dark:text-text-dark justify-center">
-        Loading...
-        <span className="inline-block w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></span>
-      </div>
-    );
-  }
+  const replyMutation = useMutation({
+    mutationFn: async ({ commentId, content }) => {
+      return axios.post(
+        `https://route-posts.routemisr.com/posts/${ComponentData}/comments/${commentId}/replies`,
+        { content },
+        {
+          headers: {
+            token: localStorage.getItem("token"),
+          },
+        },
+      );
+    },
 
-  if (isError) {
-    return <h2>Error...</h2>;
-  }
+    onSuccess: () => {
+      toast.success("Reply added ✅");
+      queryClient.invalidateQueries(["replies"]);
+    },
+
+    onError: (err) => {
+      toast.error(err.response?.data?.message || "Error");
+    },
+  });
 
   function formatSmartDate(dateString) {
     const now = new Date();
@@ -150,6 +165,23 @@ export default function AllComponent({ ComponentData }) {
   const handleCancel = () => {
     setIsEditing(false);
   };
+
+  const { mutate, isPending } = postCommentMutation;
+
+  
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-text dark:text-text-dark justify-center">
+        Loading...
+        <span className="inline-block w-4 h-4 border-2 border-gray-500 border-t-transparent rounded-full animate-spin"></span>
+      </div>
+    );
+  }
+
+  if (isError) {
+    return <h2>Error...</h2>;
+  }
 
 
   return (
@@ -256,13 +288,29 @@ export default function AllComponent({ ComponentData }) {
                         </span>
                         <button
                           onClick={() => likeMutation.mutate(comment._id)}
-                          className="text-xs font-semibold text-text-muted cursor-pointer dark:text-text-muted-dark hover:underline"
+                          disabled={
+                            likeMutation.isPending &&
+                            likeMutation.variables === comment._id
+                          }
+                          className="text-xs font-semibold text-text-muted cursor-pointer dark:text-text-muted-dark hover:underline disabled:opacity-50"
                         >
-                          Like ({comment.likes.length || 0})
+                          {likeMutation.isPending &&
+                          likeMutation.variables === comment._id ? (
+                            <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin inline-block"></span>
+                          ) : (
+                            <>Like ({comment.likes.length || 0})</>
+                          )}
                         </button>
 
-                        <button className="text-xs font-semibold cursor-pointer text-text-muted dark:text-text-muted-dark hover:text-primary dark:hover:text-primary-hover hover:underline">
-                          Reply
+                        <button
+                          onClick={() =>
+                            setOpenReplyId(
+                              openReplyId === comment._id ? null : comment._id,
+                            )
+                          }
+                          className="text-xs font-semibold cursor-pointer text-text-muted dark:text-text-muted-dark hover:text-primary dark:hover:text-primary-hover hover:underline"
+                        >
+                          Reply ({comment.repliesCount || 0})
                         </button>
                       </div>
 
@@ -303,6 +351,90 @@ export default function AllComponent({ ComponentData }) {
                         </div>
                       )}
                     </div>
+
+                    {/* open Reply  */}
+
+                    {openReplyId === comment._id && (
+                      <div className="relative mt-2 ml-5 pl-4">
+                        {/* line */}
+                        <span className="absolute bottom-10 left-0 top-1 w-px rounded-full bg-border dark:bg-border-dark"></span>
+                        
+                        {/* empty state */}
+                        <ReplySection ComponentData={ComponentData} comment={comment} />
+
+                        <div className="mt-2">
+                          <p className="mb-1 text-[11px] font-semibold text-text-muted dark:text-text-muted-dark">
+                            Replying to {comment.user?.name || "User"}
+                          </p>
+
+                          <div className="flex items-start gap-2">
+                            {/* user image */}
+                            <img
+                              src={user?.photo}
+                              alt={user?.name}
+                              className="h-7 w-7 rounded-full object-cover"
+                            />
+
+                            {/* input container (same style as comment) */}
+                            <div className="w-full rounded-2xl border border-border bg-hover dark:border-border-dark dark:bg-hover-dark px-2.5 py-1.5 focus-within:border-primary focus-within:bg-card dark:focus-within:bg-card-dark">
+                              <textarea
+                                ref={replyRef}
+                                placeholder="Write a reply..."
+                                rows="1"
+                                className="max-h-[120px] min-h-[38px] w-full resize-none bg-transparent px-2 py-1 text-sm outline-none placeholder:text-text-muted dark:placeholder:text-text-muted-dark dark:text-text-dark"
+                              />
+
+                              <div className="mt-1 flex items-center justify-between">
+                                {/* left icons */}
+                                <div className="flex items-center gap-1">
+                                  <label className="cursor-pointer rounded-full p-2 text-text-muted dark:text-text-muted-dark hover:bg-hover dark:hover:bg-hover-dark hover:text-success">
+                                    <FaRegImage size={14} />
+                                    <input type="file" className="hidden" />
+                                  </label>
+
+                                  <button className="rounded-full p-2 text-text-muted dark:text-text-muted-dark hover:bg-hover dark:hover:bg-hover-dark hover:text-warning">
+                                    <FaRegSmile size={14} />
+                                  </button>
+                                </div>
+
+                                {/* send */}
+                                <button
+                                  onClick={() => {
+                                    const content =
+                                      replyRef.current.value?.trim();
+
+                                    if (!content) {
+                                      toast.error("Reply cannot be empty ❌");
+                                      return;
+                                    }
+
+                                    replyMutation.mutate(
+                                      {
+                                        commentId: comment._id,
+                                        content,
+                                      },
+                                      {
+                                        onSuccess: () => {
+                                          replyRef.current.value = "";
+                                        },
+                                      },
+                                    );
+                                  }}
+                                  disabled={replyMutation.isPending}
+                                  className="flex h-8 w-8 items-center justify-center rounded-full bg-primary hover:bg-primary-hover text-white disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                  {replyMutation.isPending ? (
+                                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                                  ) : (
+                                    <FaPaperPlane size={12} />
+                                  )}
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -361,15 +493,20 @@ export default function AllComponent({ ComponentData }) {
                     return;
                   }
 
-                  postCommentMutation.mutate(content, {
+                  mutate(content, {
                     onSuccess: () => {
                       commentRef.current.value = "";
                     },
                   });
                 }}
+                disabled={isPending}
                 className="flex h-9 w-9 items-center justify-center rounded-full bg-primary hover:bg-primary-hover text-white disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <FaPaperPlane size={13} />
+                {isPending ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                ) : (
+                  <FaPaperPlane size={13} />
+                )}
               </button>
             </div>
           </div>

@@ -48,7 +48,7 @@ export default function AllLikesModal({ isOpen, onClose, likesData }) {
 
               <button
                 onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted dark:text-text-muted-dark transition hover:bg-hover dark:hover:bg-hover-dark"
+                className="flex cursor-pointer h-8 w-8 items-center justify-center rounded-full text-text-muted dark:text-text-muted-dark transition hover:bg-hover dark:hover:bg-hover-dark"
               >
                 <FaTimes />
               </button>
@@ -56,7 +56,10 @@ export default function AllLikesModal({ isOpen, onClose, likesData }) {
 
             {/* BODY */}
             <div className="max-h-[420px] overflow-y-auto px-2 py-2">
-              <div className="space-y-1">loading.....</div>
+              <div className="flex items-center gap-2 justify-center py-4">
+                <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin"></span>
+                Loading...
+              </div>
             </div>
           </div>
         </div>
@@ -80,7 +83,7 @@ export default function AllLikesModal({ isOpen, onClose, likesData }) {
 
               <button
                 onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted dark:text-text-muted-dark transition hover:bg-hover dark:hover:bg-hover-dark"
+                className="flex cursor-pointer h-8 w-8 items-center justify-center rounded-full text-text-muted dark:text-text-muted-dark transition hover:bg-hover dark:hover:bg-hover-dark"
               >
                 <FaTimes />
               </button>
@@ -114,7 +117,7 @@ export default function AllLikesModal({ isOpen, onClose, likesData }) {
 
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-text-muted dark:text-text-muted-dark transition hover:bg-hover dark:hover:bg-hover-dark"
+            className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-full text-text-muted dark:text-text-muted-dark transition hover:bg-hover dark:hover:bg-hover-dark"
           >
             <FaTimes />
           </button>

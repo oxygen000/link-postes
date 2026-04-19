@@ -32,7 +32,7 @@ export default function PostDaels() {
     isError,
   } = useQuery({
     queryFn: getDataPost,
-    queryKey: ["DataPost"],
+    queryKey: [`DataPost-${id}`],
     select: (res) => res.data.data.post,
   });
 
