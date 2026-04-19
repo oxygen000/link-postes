@@ -225,11 +225,7 @@ export default function Notifications() {
             ) : (
               displayedNotifications.map((notification) => (
                 <>
-                  <Link
-                    key={notification._id}
-                    to={`/notifications/${notification._id}`}
-                    className="block"
-                  >
+                  <div key={notification._id} className="block">
                     <article className="group relative flex gap-3 rounded-xl border p-3 sm:rounded-2xl sm:p-4 border-blue-200 dark:border-blue-700 bg-blue-50 dark:bg-blue-900">
                       <div className="relative shrink-0">
                         <Link
@@ -290,7 +286,7 @@ export default function Notifications() {
                         </div>
                       </div>
                     </article>
-                  </Link>
+                  </div>
                 </>
               ))
             )}
