@@ -19,6 +19,8 @@ import { FaRegUser } from "react-icons/fa";
 import { IoChatbubbleOutline } from "react-icons/io5";
 import { RxHamburgerMenu } from "react-icons/rx";
 import ThemeSwitcher from "./../ThemeSwitcher";
+import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Nav() {
   const { token, setToken, user } = useContext(authContext);
@@ -30,6 +32,21 @@ export default function Nav() {
     setToken(null);
     navigate("/login");
   }
+
+  async function getNotifications() {
+    return axios.get(
+      "https://route-posts.routemisr.com/notifications?unread=false&page=1&limit=10",
+      {
+        headers: { token },
+      },
+    );
+  }
+
+  const { data: notifications = [] } = useQuery({
+    queryFn: getNotifications,
+    queryKey: ["notifications"],
+    select: (res) => res.data.data.notifications,
+  });
 
   return (
     <>
@@ -79,20 +96,29 @@ export default function Nav() {
             </NavbarItem>
 
             <NavbarItem>
-              <Link to="/notifications">
-                <div
-                  className={`flex items-center gap-1 rounded-full px-3 py-2 transition
-                  ${
-                    location.pathname === "/notifications"
-                      ? "bg-card-hover text-primary dark:text-primary-hover"
-                      : "text-text dark:text-text-dark hover:text-primary-hover"
-                  }`}
-                >
-                  <IoChatbubbleOutline />
-                  Notifications
-                </div>
-              </Link>
-            </NavbarItem>
+  <Link to="/notifications">
+    <div
+      className={`flex items-center gap-1 rounded-full px-3 py-2 transition
+      ${
+        location.pathname === "/notifications"
+          ? "bg-card-hover text-primary dark:text-primary-hover"
+          : "text-text dark:text-text-dark hover:text-primary-hover"
+      }`}
+    >
+      <div className="relative">
+        <IoChatbubbleOutline />
+
+        {notifications.length > 0 && (
+          <span className="absolute -top-2 -right-1.5 bg-blue-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+            {notifications.length}
+          </span>
+        )}
+      </div>
+
+      Notifications
+    </div>
+  </Link>
+</NavbarItem>
           </div>
         </NavbarContent>
 

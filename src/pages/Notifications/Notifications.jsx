@@ -211,6 +211,11 @@ export default function Notifications() {
     }`}
             >
               Unread
+              {notifications.length > 0 && (
+                <span className="bg-blue-500/40 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                  {notifications.length}
+                </span>
+              )}
             </button>
           </div>
 

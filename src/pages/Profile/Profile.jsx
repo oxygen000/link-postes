@@ -60,7 +60,7 @@ export default function Profile() {
     select: (res) => res.data.data.bookmarks,
   });
 
-  async function handleUploadPhoto(file) {
+  async function handle  (file) {
     try {
       if (!file) return;
       setIsUploading(true);
