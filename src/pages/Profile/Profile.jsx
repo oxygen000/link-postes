@@ -3,49 +3,42 @@ import { FiMail } from "react-icons/fi";
 import { FaRegFileAlt, FaBookmark } from "react-icons/fa";
 import { useContext, useState } from "react";
 import { authContext } from "./../../context/AuthContextProvider";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { FaCalendarDay } from "react-icons/fa";
 import LoadingPage from "../../components/Loading/LoadingPage";
 import PostCard from "../Home/PostCard";
-
+import { toast } from "react-toastify";
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState("posts");
   let { token } = useContext(authContext);
+  const queryClient = useQueryClient();
+  const [isUploading, setIsUploading] = useState(false);
+  const [preview, setPreview] = useState(null);
+  const [openImage, setOpenImage] = useState(false);
 
-   async function getMyPosts() {
-    return axios.get(
-      "https://route-posts.routemisr.com/users/profile-data",
-      {
-        headers: {
-          token: token,
-        },
+  async function getMyPosts() {
+    return axios.get("https://route-posts.routemisr.com/users/profile-data", {
+      headers: {
+        token: token,
       },
-    );
+    });
   }
-   let {
-    data: posts = []
-  } = useQuery({
+  let { data: posts = [] } = useQuery({
     queryFn: getMyPosts,
     queryKey: ["MyPosts"],
     select: (res) => res.data.data.posts,
   });
 
-  console.log(posts)
-
   async function getProfile() {
-    return axios.get(
-      "https://route-posts.routemisr.com/users/profile-data",
-      {
-        headers: {
-          token: token,
-        },
+    return axios.get("https://route-posts.routemisr.com/users/profile-data", {
+      headers: {
+        token: token,
       },
-    );
+    });
   }
-  
-  
+
   let {
     data: user = [],
     isLoading,
@@ -55,31 +48,48 @@ export default function Profile() {
     queryKey: ["MyProfile"],
     select: (res) => res.data.data.user,
   });
-  
 
-   async function getSavedPosts() {
-    return axios.get(
-      "https://route-posts.routemisr.com/users/bookmarks",
-      {
-        headers: { token },
-      }
-    );
+  async function getSavedPosts() {
+    return axios.get("https://route-posts.routemisr.com/users/bookmarks", {
+      headers: { token },
+    });
   }
-  const {
-    data: savePosts = [],  
-  } = useQuery({
+  const { data: savePosts = [] } = useQuery({
     queryFn: getSavedPosts,
     queryKey: ["savedPosts"],
     select: (res) => res.data.data.bookmarks,
   });
 
+  async function handleUploadPhoto(file) {
+    try {
+      if (!file) return;
+      setIsUploading(true);
 
+      const formData = new FormData();
+      formData.append("photo", file);
 
+      const { data } = await axios.put(
+        "https://route-posts.routemisr.com/users/upload-photo",
+        formData,
+        {
+          headers: {
+            token: localStorage.getItem("token"),
+          },
+        },
+      );
 
+      console.log(data);
 
-  if (isLoading) return (
-    <LoadingPage/>
-  )
+      toast.success("Photo updated successfully ✅");
+    } catch (error) {
+      console.log(error);
+      toast.error(error.response?.data?.message || "Error uploading photo");
+    } finally {
+      setIsUploading(false);
+    }
+  }
+
+  if (isLoading) return <LoadingPage />;
 
   if (isError)
     return (
@@ -117,19 +127,56 @@ export default function Profile() {
                       alt={user.name}
                       className="h-32 w-32 rounded-full border-4 border-card dark:border-card-dark object-cover shadow-lg"
                     />
+                    {isUploading && (
+                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                      </div>
+                    )}
 
                     {/* Hover overlay */}
                     <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-3">
-                      <button className="h-9 w-9 flex items-center justify-center rounded-full bg-white text-primary shadow hover:scale-105 transition">
+                      <button
+                        onClick={() => setOpenImage(true)}
+                        className="h-9 w-9 cursor-pointer flex items-center justify-center rounded-full bg-white text-primary shadow hover:scale-105 transition"
+                      >
                         <FaExpand size={14} />
                       </button>
+                      {openImage && (
+                        <div
+                          onClick={() => setOpenImage(false)}
+                          className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
+                        >
+                          {/* close button */}
+                          <button
+                            onClick={() => setOpenImage(false)}
+                            className="absolute top-5 right-5 text-white text-xl cursor-pointer"
+                          >
+                            ✕
+                          </button>
+
+                          {/* image */}
+                          <img
+                            src={user.photo}
+                            alt={user.name}
+                            className="max-w-[90%] max-h-[90%] rounded-lg shadow-lg"
+                          />
+                        </div>
+                      )}
 
                       <label className="h-9 w-9 flex items-center justify-center rounded-full bg-primary text-white shadow hover:scale-105 transition cursor-pointer">
                         <FaCamera size={14} />
                         <input
                           type="file"
                           accept="image/*"
-                          className="hidden"
+                          className=" hidden"
+                          onChange={(e) => {
+                            const file = e.target.files[0];
+
+                            if (file) {
+                              setPreview(URL.createObjectURL(file));
+                              handleUploadPhoto(file);
+                            }
+                          }}
                         />
                       </label>
                     </div>
@@ -182,13 +229,14 @@ export default function Profile() {
                       Gender: {user.gender}
                     </p>
                     <p className="flex items-center gap-2">
-  <FaCalendarDay />
-  Birth Of: {new Date(user.dateOfBirth).toLocaleDateString()}
-</p>
-<p className="flex items-center gap-2">
-  <FaUsers />
-  Join : {new Date(user.createdAt).toLocaleDateString()}
-</p>
+                      <FaCalendarDay />
+                      Birth Of:{" "}
+                      {new Date(user.dateOfBirth).toLocaleDateString()}
+                    </p>
+                    <p className="flex items-center gap-2">
+                      <FaUsers />
+                      Join : {new Date(user.createdAt).toLocaleDateString()}
+                    </p>
                   </div>
                 </div>
 
@@ -245,41 +293,38 @@ export default function Profile() {
           <div className="space-y-4">
             {activeTab === "posts" && (
               <>
-              {posts.length > 0 ? (
-                      posts.map((post) => (
-                        <PostCard key={post._id} post={post} />
-                      ))
-                    ) : (
-                      <p className="text-center text-text-muted dark:text-text-muted-dark mt-5 text-lg bg-white dark:bg-bg-dark p-4 rounded-lg shadow-sm py-5">
-                        No posts yet. Be the first one to publish.
-                      </p>
-                    )}
-                    <p className="text-center text-text-muted dark:text-text-muted-dark mt-5 text-sm">
-                     You reached the end
-                    </p>
-             </>
+                {posts.length > 0 ? (
+                  posts.map((post) => <PostCard key={post._id} post={post} />)
+                ) : (
+                  <p className="text-center text-text-muted dark:text-text-muted-dark mt-5 text-lg bg-white dark:bg-bg-dark p-4 rounded-lg shadow-sm py-5">
+                    No posts yet. Be the first one to publish.
+                  </p>
+                )}
+                <p className="text-center text-text-muted dark:text-text-muted-dark mt-5 text-sm">
+                  You reached the end
+                </p>
+              </>
             )}
 
             {activeTab === "saved" && (
-             <>
-              {savePosts.length > 0 ? (
-                      savePosts.map((post) => (
-                        <PostCard key={post._id} post={post} />
-                      ))
-                    ) : (
-                      <p className="text-center text-text-muted dark:text-text-muted-dark mt-5 text-lg bg-white dark:bg-bg-dark p-4 rounded-lg shadow-sm py-5">
-                        No posts yet. Be the first one to publish.
-                      </p>
-                    )}
-                    <p className="text-center text-text-muted dark:text-text-muted-dark mt-5 text-sm">
-                     You reached the end
-                    </p>
-             </>
+              <>
+                {savePosts.length > 0 ? (
+                  savePosts.map((post) => (
+                    <PostCard key={post._id} post={post} />
+                  ))
+                ) : (
+                  <p className="text-center text-text-muted dark:text-text-muted-dark mt-5 text-lg bg-white dark:bg-bg-dark p-4 rounded-lg shadow-sm py-5">
+                    No posts yet. Be the first one to publish.
+                  </p>
+                )}
+                <p className="text-center text-text-muted dark:text-text-muted-dark mt-5 text-sm">
+                  You reached the end
+                </p>
+              </>
             )}
           </div>
         </section>
       </div>
-      
     </>
   );
 }
