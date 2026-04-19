@@ -156,7 +156,7 @@ export default function ProfilePage() {
                 (post) => post && <PostCard key={post.id} post={post} />,
               )
             ) : (
-              <div className="rounded-2xl border border-slate-200 bg-white p-10 text-center text-slate-500 shadow-sm">
+              <div className="rounded-2xl border border-border dark:border-border-dark bg-bg dark:bg-bg-dark p-10 text-center text-text-muted dark:text-text-muted-dark shadow-sm">
                 No posts yet. Be the first one to publish.
               </div>
             )}

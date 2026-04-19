@@ -7,11 +7,14 @@ import {
   FaEllipsisH,
   FaBookmark,
   FaEdit,
+  FaUsers,
+  FaLock,
+  FaChevronDown,
 } from "react-icons/fa";
 import { FiRepeat } from "react-icons/fi";
 import { Link } from "react-router-dom";
 import { FaRegBookmark } from "react-icons/fa6";
-import { useContext, useState, useRef } from "react";
+import { useContext, useEffect, useState } from "react";
 import { authContext } from "../../context/AuthContextProvider";
 import axios from "axios";
 import AllLikesModal from "./AllLikesModal";
@@ -52,6 +55,7 @@ export default function PostCard({ post }) {
   const [notBody, setBody] = useState(post?.body || "");
   const [isSaved, setIsSaved] = useState(post.isSaved || false);
   const queryClient = useQueryClient();
+  const [postSelectedOpen, setpostSelectedOpen] = useState(false);
 
   const isLiked = post.likes.includes(currentUserId);
   const handleLike = useMutation({
@@ -145,6 +149,30 @@ export default function PostCard({ post }) {
     },
   });
 
+  const editPrivacyPostMutation = useMutation({
+    mutationFn: async ({ _id, privacy }) => {
+      return axios.put(
+        `https://route-posts.routemisr.com/posts/${_id}`,
+        { privacy },
+        { headers: { token } },
+      );
+    },
+
+    onSuccess: (_, variables) => {
+      toast.success("Privacy updated successfully ✅");
+
+      setPostPrivacy(variables.privacy);
+
+      setpostSelectedOpen(false);
+
+      queryClient.invalidateQueries(["posts"]);
+    },
+
+    onError: (error) => {
+      toast.error(error.response?.data?.message || "Error");
+    },
+  });
+
   function formatSmartDate(dateString) {
     const now = new Date();
     const postDate = new Date(dateString);
@@ -163,6 +191,17 @@ export default function PostCard({ post }) {
       minute: "2-digit",
     });
   }
+
+  const [postPrivacy, setPostPrivacy] = useState(privacy);
+
+  const options = [
+    { value: "public", label: "Public", icon: FaGlobeAmericas },
+    { value: "following", label: "Followers", icon: FaUsers },
+    { value: "only_me", label: "Only me", icon: FaLock },
+  ];
+  const selectedOption = options.find((opt) => opt.value === postPrivacy);
+
+  const Icon = selectedOption?.icon;
 
   return (
     <div className="mt-4 overflow-visible rounded-xl border border-border dark:border-border-dark bg-card dark:bg-card-dark shadow-sm transition-colors">
@@ -189,10 +228,78 @@ export default function PostCard({ post }) {
 
               <span>·</span>
 
-              <div className="flex items-center gap-1">
-                <FaGlobeAmericas size={11} />
-                {privacy}
-              </div>
+              {user._id === currentUserId ? (
+                <div className="relative inline-block">
+                  <div
+                    onClick={() => setpostSelectedOpen(!postSelectedOpen)}
+                    className="flex items-center gap-2 rounded-full  px-3 py-1 cursor-pointer"
+                  >
+                    {(() => {
+                      const selected = options.find(
+                        (o) => o.value === postPrivacy,
+                      );
+                      const Icon = selected?.icon;
+
+                      return (
+                        <>
+                          {Icon && <Icon size={12} />}
+                          <span>{selected?.label}</span>
+                        </>
+                      );
+                    })()}
+
+                    <FaChevronDown
+                      size={10}
+                      className={`transition-transform ${postSelectedOpen ? "rotate-180" : ""}`}
+                    />
+                  </div>
+
+                  {postSelectedOpen && (
+                    <div className="absolute left-0 mt-2 bg-card dark:bg-card-dark border border-border dark:border-border-dark  shadow rounded-lg overflow-hidden z-50">
+                      {options.map((opt) => {
+                        const Icon = opt.icon;
+
+                        return (
+                          <div
+                            key={opt.value}
+                            onClick={() => {
+                              const newValue = opt.value;
+                              setPostPrivacy(newValue);
+                              setpostSelectedOpen(false);
+                              editPrivacyPostMutation.mutate({
+                                _id: post._id,
+                                privacy: newValue,
+                              });
+                            }}
+                            className="flex items-center gap-2 px-3 py-2 hover:bg-hover dark:hover:bg-hover-dark cursor-pointer"
+                          >
+                            <Icon size={12} />
+                            {opt.label}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2 px-3 py-1 text-xs text-text-muted">
+                    {(() => {
+                      const selected = options.find(
+                        (o) => o.value === postPrivacy,
+                      );
+                      const Icon = selected?.icon;
+
+                      return (
+                        <>
+                          {Icon && <Icon size={12} />}
+                          <span>{selected?.label}</span>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 

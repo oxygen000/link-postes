@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { FaCalendarDay } from "react-icons/fa";
 import LoadingPage from "../../components/Loading/LoadingPage";
+import PostCard from "../Home/PostCard";
 
 
 export default function Profile() {
@@ -31,6 +32,8 @@ export default function Profile() {
     select: (res) => res.data.data.posts,
   });
 
+  console.log(posts)
+
   async function getProfile() {
     return axios.get(
       "https://route-posts.routemisr.com/users/profile-data",
@@ -53,6 +56,27 @@ export default function Profile() {
     select: (res) => res.data.data.user,
   });
   
+
+   async function getSavedPosts() {
+    return axios.get(
+      "https://route-posts.routemisr.com/users/bookmarks",
+      {
+        headers: { token },
+      }
+    );
+  }
+  const {
+    data: savePosts = [],  
+  } = useQuery({
+    queryFn: getSavedPosts,
+    queryKey: ["savedPosts"],
+    select: (res) => res.data.data.bookmarks,
+  });
+
+
+
+
+
   if (isLoading) return (
     <LoadingPage/>
   )
@@ -220,15 +244,37 @@ export default function Profile() {
           {/* Content */}
           <div className="space-y-4">
             {activeTab === "posts" && (
-              <p className="rounded-xl border border-border dark:border-border-dark bg-hover dark:bg-hover-dark p-5 text-sm text-text-muted dark:text-text-muted-dark">
-                You have not posted yet.
-              </p>
+              <>
+              {posts.length > 0 ? (
+                      posts.map((post) => (
+                        <PostCard key={post._id} post={post} />
+                      ))
+                    ) : (
+                      <p className="text-center text-text-muted dark:text-text-muted-dark mt-5 text-lg bg-white dark:bg-bg-dark p-4 rounded-lg shadow-sm py-5">
+                        No posts yet. Be the first one to publish.
+                      </p>
+                    )}
+                    <p className="text-center text-text-muted dark:text-text-muted-dark mt-5 text-sm">
+                     You reached the end
+                    </p>
+             </>
             )}
 
             {activeTab === "saved" && (
-              <p className="rounded-xl border border-border dark:border-border-dark bg-hover dark:bg-hover-dark p-5 text-sm text-text-muted dark:text-text-muted-dark">
-                You have no saved posts.
-              </p>
+             <>
+              {savePosts.length > 0 ? (
+                      savePosts.map((post) => (
+                        <PostCard key={post._id} post={post} />
+                      ))
+                    ) : (
+                      <p className="text-center text-text-muted dark:text-text-muted-dark mt-5 text-lg bg-white dark:bg-bg-dark p-4 rounded-lg shadow-sm py-5">
+                        No posts yet. Be the first one to publish.
+                      </p>
+                    )}
+                    <p className="text-center text-text-muted dark:text-text-muted-dark mt-5 text-sm">
+                     You reached the end
+                    </p>
+             </>
             )}
           </div>
         </section>
