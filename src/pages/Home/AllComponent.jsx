@@ -151,6 +151,7 @@ export default function AllComponent({ ComponentData }) {
     setIsEditing(false);
   };
 
+
   return (
     <div className="border rounded-xl border-border bg-bg dark:border-border-dark dark:bg-bg-dark px-4 py-4">
       {/* HEADER */}
@@ -207,7 +208,7 @@ export default function AllComponent({ ComponentData }) {
                               ref={commentRef}
                             />
                             <button
-                              className="rounded-full bg-[#1877f2] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#166fe5]"
+                              className="rounded-full bg-[#1877f2] cursor-pointer px-3 py-1.5 text-xs font-bold text-white hover:bg-[#166fe5]"
                               onClick={() => {
                                 const content =
                                   commentRef.current.value?.trim();
@@ -233,7 +234,7 @@ export default function AllComponent({ ComponentData }) {
                             </button>
 
                             <button
-                              className="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
+                              className="rounded-full border cursor-pointer border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100"
                               onClick={handleCancel}
                             >
                               Cancel
@@ -284,7 +285,7 @@ export default function AllComponent({ ComponentData }) {
                             <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-2 z-50">
                               <button
                                 onClick={() => setIsEditing(true)}
-                                className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center gap-2"
+                                className="w-full cursor-pointer text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center gap-2"
                               >
                                 <FaEdit /> Edit
                               </button>
@@ -293,7 +294,7 @@ export default function AllComponent({ ComponentData }) {
                                 onClick={() =>
                                   deletePostMutation.mutate(comment._id)
                                 }
-                                className="w-full text-left px-3 py-2 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center gap-2"
+                                className="w-full cursor-pointer text-left px-3 py-2 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center gap-2"
                               >
                                 <MdDeleteOutline /> Delete
                               </button>

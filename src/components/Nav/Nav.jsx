@@ -96,29 +96,28 @@ export default function Nav() {
             </NavbarItem>
 
             <NavbarItem>
-  <Link to="/notifications">
-    <div
-      className={`flex items-center gap-1 rounded-full px-3 py-2 transition
+              <Link to="/notifications">
+                <div
+                  className={`flex items-center gap-1 rounded-full px-3 py-2 transition
       ${
         location.pathname === "/notifications"
           ? "bg-card-hover text-primary dark:text-primary-hover"
           : "text-text dark:text-text-dark hover:text-primary-hover"
       }`}
-    >
-      <div className="relative">
-        <IoChatbubbleOutline />
+                >
+                  <div className="relative">
+                    <IoChatbubbleOutline />
 
-        {notifications.length > 0 && (
-          <span className="absolute -top-2 -right-1.5 bg-blue-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
-            {notifications.length}
-          </span>
-        )}
-      </div>
-
-      Notifications
-    </div>
-  </Link>
-</NavbarItem>
+                    {notifications.length > 0 && (
+                      <span className="absolute -top-2 -right-1.5 bg-blue-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">
+                        {notifications.length}
+                      </span>
+                    )}
+                  </div>
+                  Notifications
+                </div>
+              </Link>
+            </NavbarItem>
           </div>
         </NavbarContent>
 
