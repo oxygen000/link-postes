@@ -232,7 +232,7 @@ export default function PostCard({ post }) {
                 <div className="relative inline-block">
                   <div
                     onClick={() => setpostSelectedOpen(!postSelectedOpen)}
-                    className="flex items-center gap-2 rounded-full  px-3 py-1 cursor-pointer"
+                    className="flex items-center  gap-2 rounded-full  px-3 py-1 cursor-pointer"
                   >
                     {(() => {
                       const selected = options.find(
@@ -322,7 +322,7 @@ export default function PostCard({ post }) {
               <div className="relative">
                 <Button
                   onClick={() => setOpenMenuId(openMenuId === _id ? null : _id)}
-                  className="bg-transparent text-text-muted dark:text-text-muted-dark hover:bg-hover dark:hover:bg-hover-dark rounded-full p-2"
+                  className="bg-transparent  text-text-muted dark:text-text-muted-dark hover:bg-hover dark:hover:bg-hover-dark rounded-full p-2"
                 >
                   <FaEllipsisH className="w-4 h-4" />
                 </Button>
@@ -330,13 +330,13 @@ export default function PostCard({ post }) {
                   <div className="absolute right-0 mt-2 w-32 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-2 z-50">
                     <button
                       onClick={() => setIsEditing(true)}
-                      className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center gap-2"
+                      className="w-full text-left cursor-pointer px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center gap-2"
                     >
                       <FaEdit /> Edit
                     </button>
                     <button
                       onClick={() => deletePostMutation.mutate(_id)}
-                      className=" w-full text-left px-3 py-2 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center gap-2"
+                      className=" w-full cursor-pointer text-left px-3 py-2 text-red-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded flex items-center justify-center gap-2"
                     >
                       <MdDeleteOutline /> Delete
                     </button>

@@ -5,6 +5,7 @@ import { CiImageOn, CiFaceSmile } from "react-icons/ci";
 import { IoPaperPlaneOutline } from "react-icons/io5";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function PostComposer() {
   const { user } = useContext(authContext);
@@ -14,6 +15,7 @@ export default function PostComposer() {
   const [preview, setPreview] = useState(null);
   const fileInputRef = useRef(null);
   const [isPosting, setIsPosting] = useState(false);
+  const queryClient = useQueryClient();
 
   async function handleCreatePost() {
     try {
@@ -34,8 +36,21 @@ export default function PostComposer() {
         },
       );
 
-      console.log(data);
+      queryClient.setQueryData(["posts"], (oldData) => {
+        if (!oldData) return oldData;
 
+        const newPost = data.data;
+
+        return {
+          ...oldData,
+          data: {
+            ...oldData.data,
+            posts: [newPost, ...oldData.data.posts],
+          },
+        };
+      });
+
+      queryClient.invalidateQueries(["posts"]);
       setText("");
       setImage(null);
       setPreview(null);
