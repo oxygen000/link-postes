@@ -12,11 +12,12 @@ import { toast } from "react-toastify";
 
 export default function Profile() {
   const [activeTab, setActiveTab] = useState("posts");
-  let { token } = useContext(authContext);
+  let { token,user, setUser } = useContext(authContext);
   const queryClient = useQueryClient();
   const [isUploading, setIsUploading] = useState(false);
   const [preview, setPreview] = useState(null);
   const [openImage, setOpenImage] = useState(false);
+  
 
   async function getMyPosts() {
     return axios.get("https://route-posts.routemisr.com/users/profile-data", {
@@ -40,7 +41,7 @@ export default function Profile() {
   }
 
   let {
-    data: user = [],
+    data: userProfile = [],
     isLoading,
     isError,
   } = useQuery({
@@ -60,34 +61,45 @@ export default function Profile() {
     select: (res) => res.data.data.bookmarks,
   });
 
-  async function handleUploadPhoto  (file) {
-    try {
-      if (!file) return;
-      setIsUploading(true);
+async function handleUploadPhoto(file) {
+  try {
+    if (!file) return;
+    setIsUploading(true);
 
-      const formData = new FormData();
-      formData.append("photo", file);
+    const formData = new FormData();
+    formData.append("photo", file);
 
-      const { data } = await axios.put(
-        "https://route-posts.routemisr.com/users/upload-photo",
-        formData,
-        {
-          headers: {
-            token: localStorage.getItem("token"),
-          },
+    const { data } = await axios.put(
+      "https://route-posts.routemisr.com/users/upload-photo",
+      formData,
+      {
+        headers: {
+          token: localStorage.getItem("token"),
         },
-      );
+      }
+    );
 
-      console.log(data);
+    console.log(data);
 
-      toast.success("Photo updated successfully ✅");
-    } catch (error) {
-      console.log(error);
-      toast.error(error.response?.data?.message || "Error uploading photo");
-    } finally {
-      setIsUploading(false);
-    }
+    const newPhoto = data.data.photo;
+
+    const updatedUser = {
+      ...user,
+      photo: newPhoto,
+    };
+
+    setUser(updatedUser);
+
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+
+    toast.success("Photo updated successfully ✅");
+  } catch (error) {
+    console.log(error);
+    toast.error(error.response?.data?.message || "Error uploading photo");
+  } finally {
+    setIsUploading(false);
   }
+}
 
   if (isLoading) return <LoadingPage />;
 
@@ -95,6 +107,9 @@ export default function Profile() {
     return (
       <p className="text-center mt-5 text-red-500">Something went wrong...</p>
     );
+
+
+
 
   return (
     <>
@@ -185,7 +200,7 @@ export default function Profile() {
                   {/* Name */}
                   <div className="pb-3">
                     <h2 className="text-3xl font-extrabold text-text dark:text-text-dark">
-                      {user.name}
+                      {userProfile.name}
                     </h2>
                     <p className="text-text-muted dark:text-text-muted-dark font-medium">
                       @{user.username}
@@ -200,9 +215,9 @@ export default function Profile() {
 
                 {/* Stats */}
                 <div className="grid grid-cols-3 gap-4 w-full lg:w-[520px]">
-                  <Stat title="Followers" number={user.followersCount} />
-                  <Stat title="Following" number={user.followingCount} />
-                  <Stat title="Bookmarks" number={user.bookmarksCount} />
+                  <Stat title="Followers" number={userProfile.followersCount} />
+                  <Stat title="Following" number={userProfile.followingCount} />
+                  <Stat title="Bookmarks" number={userProfile.bookmarksCount} />
                 </div>
               </div>
 
@@ -217,7 +232,7 @@ export default function Profile() {
                   <div className="mt-4 space-y-3 text-sm text-text-muted dark:text-text-muted-dark">
                     <p className="flex items-center gap-2">
                       <FiMail />
-                      {user.email}
+                      {userProfile.email}
                     </p>
 
                     <p className="flex items-center gap-2">
@@ -226,16 +241,16 @@ export default function Profile() {
                     </p>
                     <p className="flex items-center gap-2">
                       <FaUsers />
-                      Gender: {user.gender}
+                      Gender: {userProfile.gender}
                     </p>
                     <p className="flex items-center gap-2">
                       <FaCalendarDay />
                       Birth Of:{" "}
-                      {new Date(user.dateOfBirth).toLocaleDateString()}
+                      {new Date(userProfile.dateOfBirth).toLocaleDateString()}
                     </p>
                     <p className="flex items-center gap-2">
                       <FaUsers />
-                      Join : {new Date(user.createdAt).toLocaleDateString()}
+                      Join : {new Date(userProfile.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
@@ -243,7 +258,7 @@ export default function Profile() {
                 {/* Mini Stats */}
                 <div className="grid gap-4">
                   <MiniStat title="My posts" number={posts.length} />
-                  <MiniStat title="Saved posts" number={user.bookmarksCount} />
+                  <MiniStat title="Saved posts" number={userProfile.bookmarksCount} />
                 </div>
               </div>
             </div>
@@ -285,7 +300,7 @@ export default function Profile() {
 
             {/* Counter */}
             <span className="rounded-full bg-primary/10 px-4 py-1 text-xs font-bold text-primary">
-              0
+              {activeTab === "posts" ? posts.length : savePosts.length}{" "}
             </span>
           </div>
 
